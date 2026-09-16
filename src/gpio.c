@@ -24,7 +24,11 @@ void gpio_set_output(uint8_t port, uint8_t pin)
 		case GPIO_PORTD:
 			DDRD |= (1<<pin);
 			break;
-	} 
+		case GPIO_PORTE:
+			DDRE |= (1<<pin);
+			break;
+	
+    } 
 }
 
 void gpio_set_input(uint8_t port, uint8_t pin)
@@ -40,6 +44,10 @@ void gpio_set_input(uint8_t port, uint8_t pin)
 		case GPIO_PORTD:
 			DDRD &= ~(1<<pin);
 			break;
+        case GPIO_PORTE:
+			DDRE |= (1<<pin);
+			break;
+	
 	} 
 }
 
@@ -55,6 +63,9 @@ void gpio_set(uint8_t port, uint8_t pin)
 			break;
 		case GPIO_PORTD:
 			PORTD |= (1<<pin);
+			break;
+		case GPIO_PORTE:
+			PORTE |= (1<<pin);
 			break;
 	} 
 }
@@ -72,7 +83,11 @@ void gpio_clear(uint8_t port, uint8_t pin)
 		case GPIO_PORTD:
 			PORTD &= ~(1<<pin);
 			break;
-	} 
+		case GPIO_PORTE:
+			PORTE &= ~(1<<pin);
+			break;
+	
+    } 
 }
 
 int gpio_get(uint8_t port, uint8_t pin)
@@ -88,6 +103,11 @@ int gpio_get(uint8_t port, uint8_t pin)
 		case GPIO_PORTD:
 			return (PORTD & (1<<pin));
 			break;
+        case GPIO_PORTE:
+			return (PORTE & (1<<pin));
+			break;
+
+
 	} 
 	return 0;
 }

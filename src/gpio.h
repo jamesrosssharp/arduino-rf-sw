@@ -18,6 +18,7 @@ enum {
 	GPIO_PORTB = 0,
 	GPIO_PORTC = 1,
 	GPIO_PORTD = 2,
+	GPIO_PORTE = 3,
 };
 
 void gpio_set_output(uint8_t port, uint8_t pin);

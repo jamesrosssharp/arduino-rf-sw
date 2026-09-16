@@ -1,5 +1,5 @@
-MCU=atmega328p
-CFLAGS ?= -Os -DF_CPU=16000000UL -mmcu=$(MCU)
+MCU=atmega328pb
+CFLAGS ?= -Os -DF_CPU=1000000UL -mmcu=$(MCU)
 LDFLAGS ?= -mmcu=$(MCU)
 ARDUINO_USB ?= /dev/ttyACM0
 
@@ -27,7 +27,7 @@ $(BUILD_DIR)/%.o: %.c Makefile
 	avr-gcc $(CFLAGS) -c -o $@ $<
 
 prog: $(BUILD_DIR)/$(TARGET)
-	avrdude -F -V -c arduino -p ATMEGA328p -P ${ARDUINO_USB} -b 115200 -U flash:w:$(BUILD_DIR)/$(TARGET)
+	avrdude -F -p m328pb -c atmelice_isp -U flash:w:$(BUILD_DIR)/$(TARGET)
 
 avrterm:
 	avrdude -F -V -c avrisp -p ATMEGA328p -P ${ARDUINO_USB} -b 19200 -t -u

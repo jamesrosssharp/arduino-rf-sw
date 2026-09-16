@@ -26,104 +26,76 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
-#define LED_PORT GPIO_PORTB
-#define LED_PIN	 5
+#define LED1_PORT GPIO_PORTC
+#define LED1_PIN	 0
 
-#define BS_PORT GPIO_PORTB
-#define BS_PIN	 0
+#define LED2_PORT GPIO_PORTC
+#define LED2_PIN	 1
+
+#define LED3_PORT GPIO_PORTC
+#define LED3_PIN	 2
+
+#define CTL1_PORT GPIO_PORTE
+#define CTL1_PIN	 3
+
+#define CTL2_PORT GPIO_PORTE
+#define CTL2_PIN	 2
 
 int main (void)
 {
 	uart_initialize();
 
+    gpio_set_output(LED1_PORT, LED1_PIN);
+    gpio_set_output(LED2_PORT, LED2_PIN);
+    gpio_set_output(LED3_PORT, LED3_PIN);
+    gpio_set_output(CTL1_PORT, CTL1_PIN);
+    gpio_set_output(CTL2_PORT, CTL2_PIN);
+
+
 	DEBUG("Hello world!\n");
 
-	// Set up adc
+    int cnt = 0;
 
-    PRR     = 0x00;
-	ADMUX   = 0x00;
-	ADCSRB  = 0x00;
-	DIDR0   = 0x01;
-	ADCSRA  = 0xe7;
-	
-    volatile uint32_t count = 0;
-    uint32_t accu = 0;
-    uint32_t accu2 = 0;
+    while(1)
+    {
+        DEBUG(".");
 
-    gpio_set_output(LED_PORT, LED_PIN);
-    gpio_set_output(BS_PORT, BS_PIN);
-	
-    bool dir = false;
-
-	while(1) 
-	{
-        
-        //ADCSRA |= 0x40;
-
-        //while (ADCSRA & 0x40) {
-        //    printf("Waiting...\n");
-        //}
-
-
-        if (dir)
+        switch (cnt)
         {
-            if (accu > 50000UL)
-            {
-                accu += ((uint32_t)ADC) << 5;
-            }
-            if (accu > 10000UL)
-            {
-                accu += ((uint32_t)ADC) << 3;
-            } 
-            else
-            {    
-                accu += ADC;
-            }
-
-            accu += accu2 & 0xfff;
-
-            if (accu > 125000L)
-            {
-                gpio_set(LED_PORT, LED_PIN);
-                _delay_ms(100);
-                gpio_clear(LED_PORT, LED_PIN);
-                //printf('Flipping like gflip');
-                accu2 += ADC;
-                dir = !dir;
-	            ADMUX   = !ADMUX;
-            }
-        }
-        else
-        {
-            if (accu < 10)
-            {
-                
-                accu2 += ADC;
-                dir = !dir;
-	            ADMUX   = !ADMUX;
-            }
-            else
-            {
-                uint32_t incr = ADC + (accu2 & 0xfff);
-                if (incr > accu) accu = 0;
-                else if (accu < 1000)
-                    accu -= incr >> 3;
-                else if (accu < 100)
-                    accu -= incr >> 5;
-                else accu -= incr;
-            }
+            case 0:
+                gpio_clear(LED1_PORT, LED1_PIN);
+                gpio_clear(LED2_PORT, LED2_PIN);
+                gpio_clear(LED3_PORT, LED3_PIN);
+                gpio_clear(CTL1_PORT, CTL1_PIN);
+                gpio_clear(CTL2_PORT, CTL2_PIN);
+                break;
+            case 1:
+                gpio_set(LED1_PORT, LED1_PIN);
+                gpio_clear(LED2_PORT, LED2_PIN);
+                gpio_clear(LED3_PORT, LED3_PIN);
+                gpio_set(CTL1_PORT, CTL1_PIN);
+                gpio_clear(CTL2_PORT, CTL2_PIN);
+                break;
+            case 2:
+                gpio_clear(LED1_PORT, LED1_PIN);
+                gpio_set(LED2_PORT, LED2_PIN);
+                gpio_clear(LED3_PORT, LED3_PIN);
+                gpio_clear(CTL1_PORT, CTL1_PIN);
+                gpio_set(CTL2_PORT, CTL2_PIN);
+                break;
+            case 3:
+                gpio_clear(LED1_PORT, LED1_PIN);
+                gpio_clear(LED2_PORT, LED2_PIN);
+                gpio_set(LED3_PORT, LED3_PIN);
+                gpio_set(CTL1_PORT, CTL1_PIN);
+                gpio_set(CTL2_PORT, CTL2_PIN);
+                break;
         }
 
+        cnt ++;
+        cnt &= 3;
+   
+        _delay_us(100000);
+    }
 
-	    count = accu >> 2 + 1;
-
-//        printf("%lx %x\n", &ADC, ADC);
-//		printf("count=%llx\n", count);
-
-        for (int32_t i = 0; i < count; i++)
-            _delay_us(1);
-
-		gpio_set(BS_PORT, BS_PIN);
-        gpio_clear(BS_PORT, BS_PIN);
-       	}
 }
