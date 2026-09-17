@@ -1,9 +1,4 @@
 /*
- *	(C) 2022 J. R. Sharp
- *
- *	Released under MIT License
- *
- *	See LICENSE.txt for License Terms
  *
  *	tinymt32.c : TinyMT32 pseudo-random number generator.
  *

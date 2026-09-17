@@ -48,7 +48,8 @@ int main (void)
 {
     /* Must run before anything else touches the .rng_noinit pool
      * (see rng_seed.h). */
-    uint32_t seed = rng_seed_from_noinit();
+    uint32_t raw_seed_words[RNG_SEED_WORDS];
+    uint32_t seed = rng_seed_from_noinit(raw_seed_words);
     tinymt32_t rng;
     tinymt32_init(&rng, seed);
 
@@ -62,6 +63,11 @@ int main (void)
 
 
 	DEBUG("Hello world!\n");
+	DEBUG("rng seed words:");
+	for (uint8_t i = 0; i < RNG_SEED_WORDS; i++) {
+		DEBUG(" %08lx", raw_seed_words[i]);
+	}
+	DEBUG(" -> seed %08lx\n", seed);
 
     while(1)
     {

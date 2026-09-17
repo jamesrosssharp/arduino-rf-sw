@@ -9,9 +9,11 @@
  *	.rng_noinit RAM pool (see rng_seed.ld).
  */
 
+#include <stddef.h>
+
 #include "rng_seed.h"
 
-#define RNG_SEED_POOL_WORDS 4
+#define RNG_SEED_POOL_WORDS RNG_SEED_WORDS
 
 /* Placed by src/rng_seed.ld into a dedicated NOLOAD section, so
  * crt0 never zeroes or otherwise writes to it before main() runs. */
@@ -30,12 +32,15 @@ static uint32_t rng_seed_mix(uint32_t x)
 	return x;
 }
 
-uint32_t rng_seed_from_noinit(void)
+uint32_t rng_seed_from_noinit(uint32_t raw_words_out[RNG_SEED_WORDS])
 {
 	uint32_t seed = 0;
 	uint8_t i;
 
 	for (i = 0; i < RNG_SEED_POOL_WORDS; i++) {
+		if (raw_words_out != NULL) {
+			raw_words_out[i] = rng_seed_pool[i];
+		}
 		seed ^= rng_seed_mix(rng_seed_pool[i] ^ ((uint32_t) i << 24));
 	}
 
@@ -47,9 +52,9 @@ uint32_t rng_seed_from_noinit(void)
 
 	/* Overwrite so a watchdog/soft reset perturbs next boot's seed
 	 * instead of replaying stale RAM content indefinitely. */
-	for (i = 0; i < RNG_SEED_POOL_WORDS; i++) {
-		rng_seed_pool[i] = seed + i;
-	}
+	//for (i = 0; i < RNG_SEED_POOL_WORDS; i++) {
+	//	rng_seed_pool[i] = seed + i;
+	//}
 
 	return seed;
 }
