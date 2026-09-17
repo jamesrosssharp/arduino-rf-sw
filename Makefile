@@ -17,8 +17,10 @@ OBJS=$(addprefix $(BUILD_DIR)/, $(patsubst %.c, %.o, $(SRC)))
 $(BUILD_DIR)/$(TARGET): $(BUILD_DIR)/$(TARGET_BIN)
 	avr-objcopy -O ihex -R .eeprom $< $@
 
-$(BUILD_DIR)/$(TARGET_BIN): $(OBJS)
-	avr-gcc $(LDFLAGS) -o $@ $(OBJS) -ffunction-sections -Wl,--gc-sections
+RNG_SEED_LD=$(SRC_DIR)/rng_seed.ld
+
+$(BUILD_DIR)/$(TARGET_BIN): $(OBJS) $(RNG_SEED_LD)
+	avr-gcc $(LDFLAGS) -Wl,-T,$(RNG_SEED_LD) -o $@ $(OBJS) -ffunction-sections -Wl,--gc-sections
 	#avr-strip -s $@
 	avr-size --mcu=$(MCU) -A --totals $@
 

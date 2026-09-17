@@ -14,17 +14,20 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define BLINK_DELAY_MS 1000
-
-#include <util/delay.h>
-
 #include "uart.h"
 #include "debug.h"
 #include "gpio.h"
+#include "tinymt32.h"
+#include "rng_seed.h"
+#include "sleep_timer.h"
 
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+
+/* Random sleep-between-patterns bounds, in milliseconds. */
+#define SLEEP_MIN_MS 200
+#define SLEEP_MAX_MS 3000
 
 #define LED1_PORT GPIO_PORTC
 #define LED1_PIN	 0
@@ -43,6 +46,12 @@
 
 int main (void)
 {
+    /* Must run before anything else touches the .rng_noinit pool
+     * (see rng_seed.h). */
+    uint32_t seed = rng_seed_from_noinit();
+    tinymt32_t rng;
+    tinymt32_init(&rng, seed);
+
 	uart_initialize();
 
     gpio_set_output(LED1_PORT, LED1_PIN);
@@ -54,13 +63,13 @@ int main (void)
 
 	DEBUG("Hello world!\n");
 
-    int cnt = 0;
-
     while(1)
     {
+        uint8_t pattern = tinymt32_generate_uint32(&rng) & 3;
+
         DEBUG(".");
 
-        switch (cnt)
+        switch (pattern)
         {
             case 0:
                 gpio_clear(LED1_PORT, LED1_PIN);
@@ -92,10 +101,11 @@ int main (void)
                 break;
         }
 
-        cnt ++;
-        cnt &= 3;
-   
-        _delay_us(100000);
+        uint16_t sleep_range = SLEEP_MAX_MS - SLEEP_MIN_MS;
+        uint16_t sleep_ms = SLEEP_MIN_MS
+            + (uint16_t) (tinymt32_generate_uint32(&rng) % sleep_range);
+
+        sleep_timer_sleep_ms(sleep_ms);
     }
 
 }
