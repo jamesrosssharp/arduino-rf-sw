@@ -20,14 +20,23 @@
 #include "tinymt32.h"
 #include "rng_seed.h"
 #include "sleep_timer.h"
+#include "battery.h"
 
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <util/delay.h>
 
 /* Random sleep-between-patterns bounds, in milliseconds. */
 #define SLEEP_MIN_MS 200
 #define SLEEP_MAX_MS 3000
+
+/* Power-up battery status indicator thresholds, in centivolts, and
+ * how long to hold the LEDs lit for. */
+#define BATTERY_3_LED_CV     300
+#define BATTERY_2_LED_CV     270
+#define BATTERY_1_LED_CV     250
+#define BATTERY_INDICATOR_MS 2000
 
 #define LED1_PORT GPIO_PORTC
 #define LED1_PIN	 0
@@ -69,6 +78,48 @@ int main (void)
 	}
 	DEBUG(" -> seed %08lx\n", seed);
 
+    /* Power-up battery check: sample the sense divider, print the
+     * result, and show it as a 0-3 LED bar for BATTERY_INDICATOR_MS. */
+    battery_enable();
+    _delay_us(100000);
+    // Hack because hardware is faulty
+    //uint16_t battery_cv = battery_read_centivolts();
+
+    uint16_t battery_cv = 3300;
+
+    DEBUG("battery: %u.%02uV\n", battery_cv / 100, battery_cv % 100);
+
+    uint8_t battery_leds;
+    if (battery_cv > BATTERY_3_LED_CV) {
+        battery_leds = 3;
+    } else if (battery_cv > BATTERY_2_LED_CV) {
+        battery_leds = 2;
+    } else if (battery_cv > BATTERY_1_LED_CV) {
+        battery_leds = 1;
+    } else {
+        battery_leds = 0;
+    }
+
+    if (battery_leds >= 1) {
+        gpio_set(LED1_PORT, LED1_PIN);
+    }
+    if (battery_leds >= 2) {
+        gpio_set(LED2_PORT, LED2_PIN);
+    }
+    if (battery_leds >= 3) {
+        gpio_set(LED3_PORT, LED3_PIN);
+    }
+
+    sleep_timer_sleep_ms(BATTERY_INDICATOR_MS);
+
+    gpio_clear(LED1_PORT, LED1_PIN);
+    gpio_clear(LED2_PORT, LED2_PIN);
+    gpio_clear(LED3_PORT, LED3_PIN);
+    battery_disable();
+    gpio_set_input(LED1_PORT, LED1_PIN);
+    gpio_set_input(LED2_PORT, LED2_PIN);
+    gpio_set_input(LED3_PORT, LED3_PIN);
+ 
     while(1)
     {
         uint8_t pattern = tinymt32_generate_uint32(&rng) & 3;
@@ -78,30 +129,30 @@ int main (void)
         switch (pattern)
         {
             case 0:
-                gpio_clear(LED1_PORT, LED1_PIN);
-                gpio_clear(LED2_PORT, LED2_PIN);
-                gpio_clear(LED3_PORT, LED3_PIN);
+            //    gpio_clear(LED1_PORT, LED1_PIN);
+            //    gpio_clear(LED2_PORT, LED2_PIN);
+            //    gpio_clear(LED3_PORT, LED3_PIN);
                 gpio_clear(CTL1_PORT, CTL1_PIN);
                 gpio_clear(CTL2_PORT, CTL2_PIN);
                 break;
             case 1:
-                gpio_set(LED1_PORT, LED1_PIN);
-                gpio_clear(LED2_PORT, LED2_PIN);
-                gpio_clear(LED3_PORT, LED3_PIN);
+            //    gpio_set(LED1_PORT, LED1_PIN);
+            //    gpio_clear(LED2_PORT, LED2_PIN);
+            //    gpio_clear(LED3_PORT, LED3_PIN);
                 gpio_set(CTL1_PORT, CTL1_PIN);
                 gpio_clear(CTL2_PORT, CTL2_PIN);
                 break;
             case 2:
-                gpio_clear(LED1_PORT, LED1_PIN);
-                gpio_set(LED2_PORT, LED2_PIN);
-                gpio_clear(LED3_PORT, LED3_PIN);
+            //    gpio_clear(LED1_PORT, LED1_PIN);
+            //    gpio_set(LED2_PORT, LED2_PIN);
+            //    gpio_clear(LED3_PORT, LED3_PIN);
                 gpio_clear(CTL1_PORT, CTL1_PIN);
                 gpio_set(CTL2_PORT, CTL2_PIN);
                 break;
             case 3:
-                gpio_clear(LED1_PORT, LED1_PIN);
-                gpio_clear(LED2_PORT, LED2_PIN);
-                gpio_set(LED3_PORT, LED3_PIN);
+            //    gpio_clear(LED1_PORT, LED1_PIN);
+            //    gpio_clear(LED2_PORT, LED2_PIN);
+            //    gpio_set(LED3_PORT, LED3_PIN);
                 gpio_set(CTL1_PORT, CTL1_PIN);
                 gpio_set(CTL2_PORT, CTL2_PIN);
                 break;
