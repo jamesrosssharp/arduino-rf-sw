@@ -40,6 +40,7 @@ void battery_enable(void)
 void battery_disable(void)
 {
 	gpio_clear(BATTERY_ENABLE_PORT, BATTERY_ENABLE_PIN);
+    gpio_set_input(BATTERY_ENABLE_PORT, BATTERY_ENABLE_PIN);
 }
 
 uint16_t battery_read_centivolts(void)

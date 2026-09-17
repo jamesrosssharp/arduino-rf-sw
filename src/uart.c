@@ -11,7 +11,7 @@
 
 #include "uart.h"
 
-#define BAUD_RATE 9600
+#define BAUD_RATE 300
 #define BAUD_PRESCALE ((2*F_CPU / 16 / BAUD_RATE) - 1)
 
 FILE uart_output = FDEV_SETUP_STREAM(uart_write_char, NULL, _FDEV_SETUP_WRITE);

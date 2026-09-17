@@ -29,7 +29,7 @@
 
 /* Random sleep-between-patterns bounds, in milliseconds. */
 #define SLEEP_MIN_MS 200
-#define SLEEP_MAX_MS 3000
+#define SLEEP_MAX_MS 1000
 
 /* Power-up battery status indicator thresholds, in centivolts, and
  * how long to hold the LEDs lit for. */
@@ -59,8 +59,6 @@ int main (void)
      * (see rng_seed.h). */
     uint32_t raw_seed_words[RNG_SEED_WORDS];
     uint32_t seed = rng_seed_from_noinit(raw_seed_words);
-    tinymt32_t rng;
-    tinymt32_init(&rng, seed);
 
 	uart_initialize();
 
@@ -78,6 +76,18 @@ int main (void)
 	}
 	DEBUG(" -> seed %08lx\n", seed);
 
+    uint16_t adc_seed_samples[RNG_SEED_ADC_TOTAL_SAMPLES];
+    seed = rng_seed_mix_adc_entropy(seed, adc_seed_samples);
+
+	DEBUG("rng adc entropy (PORTC5, ext vref):");
+	for (uint8_t i = 0; i < RNG_SEED_ADC_TOTAL_SAMPLES; i++) {
+		DEBUG(" %03x", adc_seed_samples[i]);
+	}
+	DEBUG(" -> seed %08lx\n", seed);
+
+    tinymt32_t rng;
+    tinymt32_init(&rng, seed);
+
     /* Power-up battery check: sample the sense divider, print the
      * result, and show it as a 0-3 LED bar for BATTERY_INDICATOR_MS. */
     battery_enable();
@@ -85,7 +95,7 @@ int main (void)
     // Hack because hardware is faulty
     //uint16_t battery_cv = battery_read_centivolts();
 
-    uint16_t battery_cv = 3300;
+    uint16_t battery_cv = 330;
 
     DEBUG("battery: %u.%02uV\n", battery_cv / 100, battery_cv % 100);
 
@@ -122,13 +132,22 @@ int main (void)
  
     while(1)
     {
-        uint8_t pattern = tinymt32_generate_uint32(&rng) & 3;
+        //uint8_t pattern = tinymt32_generate_uint32(&rng) & 3;
 
-        DEBUG(".");
+        uint32_t randm = tinymt32_generate_uint32(&rng);
 
-        switch (pattern)
+        DEBUG("%08x\n", randm);
+
+        uint8_t loops = randm & 0x3;
+        uint32_t r = randm >> 2;
+
+        for (uint8_t i = 0; i < loops; i++)
         {
-            case 0:
+            uint8_t pattern = r & 0x3;
+
+            switch (pattern)
+            {
+                case 0:
             //    gpio_clear(LED1_PORT, LED1_PIN);
             //    gpio_clear(LED2_PORT, LED2_PIN);
             //    gpio_clear(LED3_PORT, LED3_PIN);
@@ -156,11 +175,22 @@ int main (void)
                 gpio_set(CTL1_PORT, CTL1_PIN);
                 gpio_set(CTL2_PORT, CTL2_PIN);
                 break;
+            }
+
+            r >>= 2;
+
+            sleep_timer_sleep_ms(r & 7);
+
+            r >>= 3;
+
         }
 
+        gpio_clear(CTL1_PORT, CTL1_PIN);
+        gpio_clear(CTL2_PORT, CTL2_PIN);
+            
         uint16_t sleep_range = SLEEP_MAX_MS - SLEEP_MIN_MS;
         uint16_t sleep_ms = SLEEP_MIN_MS
-            + (uint16_t) (tinymt32_generate_uint32(&rng) % sleep_range);
+            + (uint16_t) (randm % sleep_range);
 
         sleep_timer_sleep_ms(sleep_ms);
     }
