@@ -136,12 +136,14 @@ int main (void)
 
         uint32_t randm = tinymt32_generate_uint32(&rng);
 
-        DEBUG("%08x\n", randm);
+        DEBUG("%08lx\n", randm);
+        _delay_us(1000000);
+
 
         uint8_t loops = randm & 0x3;
         uint32_t r = randm >> 2;
 
-        for (uint8_t i = 0; i < loops; i++)
+        for (uint8_t i = 0; i < loops + 1; i++)
         {
             uint8_t pattern = r & 0x3;
 
@@ -179,7 +181,7 @@ int main (void)
 
             r >>= 2;
 
-            sleep_timer_sleep_ms(r & 7);
+            sleep_timer_sleep_ms((r & 7) + 1);
 
             r >>= 3;
 

@@ -32,7 +32,7 @@ prog: $(BUILD_DIR)/$(TARGET)
 	avrdude -F -p m328pb -c atmelice_isp -U flash:w:$(BUILD_DIR)/$(TARGET)
 
 prog128: $(BUILD_DIR)/$(TARGET)
-	avrdude -F -p m328pb -c atmelice_isp -B 32kHz -U flash:w:$(BUILD_DIR)/$(TARGET) -U lfuse:w:0xe3:m -U hfuse:w:0xd9:m -U efuse:w:0xf8:m
+	avrdude -F -p m328pb -c atmelice_isp -B 16kHz -U flash:w:$(BUILD_DIR)/$(TARGET) -U lfuse:w:0xe3:m -U hfuse:w:0xd9:m -U efuse:w:0xf8:m
 
 
 
