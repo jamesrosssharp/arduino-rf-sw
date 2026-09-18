@@ -31,7 +31,7 @@ ISR(TIMER1_COMPA_vect)
 void sleep_timer_sleep_ms(uint16_t ms)
 {
 	uint8_t saved_prr0, saved_prr1;
-	uint32_t ticks = ((uint32_t) ms * (F_CPU / 1024UL)) / 1000UL;
+	uint32_t ticks = ((uint32_t) ms * (F_CPU / 64UL)) / 1000UL;
 
 	if (ticks == 0) {
 		ticks = 1;
@@ -39,7 +39,13 @@ void sleep_timer_sleep_ms(uint16_t ms)
 		ticks = 0xFFFFUL;
 	}
 
-	/* Timer1: CTC mode (TOP = OCR1A), /1024 prescaler. */
+	/* Timer1: CTC mode (TOP = OCR1A), /64 prescaler. F_CPU is the
+	 * 128kHz RC oscillator, so /64 (2kHz, 0.5ms/tick) gives finer
+	 * resolution than /256; the tradeoff is that OCR1A (16-bit)
+	 * saturates above ~32.7s, so requests beyond that get clamped
+	 * to ~32767ms instead of the full 1..65535ms this function
+	 * otherwise documents. Fine for this program's callers, whose
+	 * longest sleep is BATTERY_INDICATOR_MS (2000ms). */
 	TCCR1A = 0;
 	TCCR1B = (1 << WGM12);
 	OCR1A = (uint16_t) ticks;
@@ -57,7 +63,7 @@ void sleep_timer_sleep_ms(uint16_t ms)
 	PRR1 = (1 << PRTIM3) | (1 << PRSPI1) | (1 << PRTIM4)
 		| (1 << PRPTC) | (1 << PRTWI1);
 
-	TCCR1B |= (1 << CS12) | (1 << CS10); /* starts the count */
+	TCCR1B |= (1 << CS11) | (1 << CS10); /* starts the count, /64 prescaler */
 
 	set_sleep_mode(SLEEP_MODE_IDLE);
 
