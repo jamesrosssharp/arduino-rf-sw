@@ -28,8 +28,8 @@
 #include <util/delay.h>
 
 /* Random sleep-between-patterns bounds, in milliseconds. */
-#define SLEEP_MIN_MS 200
-#define SLEEP_MAX_MS 1000
+#define SLEEP_MIN_MS 100
+#define SLEEP_MAX_MS 150
 
 /* Power-up battery status indicator thresholds, in centivolts, and
  * how long to hold the LEDs lit for. */
@@ -136,16 +136,26 @@ int main (void)
 
         uint32_t randm = tinymt32_generate_uint32(&rng);
 
-        DEBUG("%08lx\n", randm);
-        _delay_us(1000000);
+        //DEBUG("%08lx\n", randm);
+        //_delay_us(1000000);
 
+        //if ((randm & 3) == 1)
+        if (1)
+        {
+            gpio_set_output(LED1_PORT, LED1_PIN);
+            gpio_set(LED1_PORT, LED1_PIN);
+            sleep_timer_sleep_ms(1);
+            gpio_clear(LED1_PORT, LED1_PIN);
+            gpio_set_input(LED1_PORT, LED1_PIN);
+        }
 
-        uint8_t loops = randm & 0x3;
+        uint8_t loops = randm & 0x7;
         uint32_t r = randm >> 2;
 
         for (uint8_t i = 0; i < loops + 1; i++)
         {
-            uint8_t pattern = r & 0x3;
+            randm = tinymt32_generate_uint32(&rng);
+            uint8_t pattern = randm & 0x3;
 
             switch (pattern)
             {
@@ -153,8 +163,8 @@ int main (void)
             //    gpio_clear(LED1_PORT, LED1_PIN);
             //    gpio_clear(LED2_PORT, LED2_PIN);
             //    gpio_clear(LED3_PORT, LED3_PIN);
-                gpio_clear(CTL1_PORT, CTL1_PIN);
-                gpio_clear(CTL2_PORT, CTL2_PIN);
+                gpio_set(CTL1_PORT, CTL1_PIN);
+                gpio_set(CTL2_PORT, CTL2_PIN);
                 break;
             case 1:
             //    gpio_set(LED1_PORT, LED1_PIN);
@@ -179,11 +189,11 @@ int main (void)
                 break;
             }
 
-            r >>= 2;
+            //r >>= 2;
 
-            sleep_timer_sleep_ms((r & 7) + 1);
+            sleep_timer_sleep_ms((r & 31) + 1);
 
-            r >>= 3;
+            //r >>= 3;
 
         }
 
